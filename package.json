@@ -1,0 +1,12 @@
+{
+  "name": "stars",
+  "version": "1.0.0",
+  "description": "frontend-nanodegree-arcade-game",
+  "dependencies": {},
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ryan Sutcliffe",
+  "license": "ISC"
+}

@@ -1,6 +1,5 @@
 'use strict'
 
-
 // Enemies our player must avoid
 var Enemy = function() {
   // instance variables:
@@ -25,17 +24,52 @@ Enemy.prototype.update = function(dt) {
   if (Math.round(this.x) === player.x &&
     this.y === player.y) {
     // You died.
-    player.x = 2;
-    player.y = 6;
+    player.x = 0;
+    player.y = 0;
 
     gameTime = 0;
     gemSet = new GemSet();
+    pointsDOM.innerText = "Points:  0";
   }
 };
 // (re)Draw the enemy
 Enemy.prototype.render = function() {
   ctx.drawImage(Resources.get(this.sprite), this.x * 100, this.y * 83);
 }
+
+var SmartEnemy = function() {
+  Enemy.call(this);
+  this.sprite = 'images/Rock.png';
+  this.x = 0;
+  this.speed = 1;
+  this.fire = false;
+};
+SmartEnemy.prototype = Object.create(Enemy.prototype);
+SmartEnemy.prototype.update = function(dt) {
+  //Move to first tile, then stop:
+  if (this.x < 0 || this.fire === true) {
+    this.x += (this.speed * dt);
+  }
+  //If Player steps in line, fire:
+  if (player.y === this.y) {
+    this.fire = true;
+  }
+  //If we've gone beyond canvas:
+  if (this.x > 5) {
+    this.x = -1;
+    this.y = Math.round((Math.random() * 5) + 1);
+    this.fire = false;
+  }
+
+  // Collision detection:
+  if (Math.round(this.x) === player.x &&
+    this.y === player.y) {
+    // You died.
+    resetGame();
+
+  }
+};
+
 
 // Player Class
 var Player = function() {
@@ -85,9 +119,15 @@ var GemSet = function() {
 GemSet.prototype.update = function() {
   if (gameTime - this.lastGem > 2 &&
     this.gemCount < 3) {
-    this.gems[this.gemCount + 1] = new Gem();
-    ++this.gemCount;
-    this.lastGem = gameTime;
+    for (var gemKey in this.gems) {
+      var gem = this.gems[gemKey];
+      if (gem === null) {
+        this.gems[gemKey] = new Gem();
+        ++this.gemCount;
+        this.lastGem = gameTime;
+        return;
+      }
+    }
   }
 };
 
@@ -98,17 +138,14 @@ GemSet.prototype.render = function() {
       if (player.x === gem.x && player.y === gem.y) {
         this.gems[gemKey] = null;
         --this.gemCount;
+        renderPoints();
       }
       else {
         gem.render();
       }
     }
-
   }
 }
-// Now instantiate your objects.
-// Place all enemy objects in an array called allEnemies
-// Place the player object in a variable called player
 
 var player = new Player();
 var gemSet = new GemSet();
@@ -116,15 +153,43 @@ var gemSet = new GemSet();
 var allEnemies = [
   new Enemy(),
   new Enemy(),
-  new Enemy()
+  new Enemy(),
+  new SmartEnemy()
 ];
 
+
 var timeDOM = document.getElementById("time");
+var pointsDOM = document.getElementById("points");
+
 function renderTime() {
   var timeDOM = document.getElementById("time");
   timeDOM.innerText = `Time: ${Math.round(gameTime)}`;
-};
+  if (gameTime / allEnemies.length > 10) {
+    allEnemies.push(new SmartEnemy());
+  }
+}
 
+function renderPoints() {
+  var pointsDOM = document.getElementById("points");
+  pointsDOM.innerText = `Points: ${addPoint()}`;
+}
+
+function resetGame() {
+  player.x = 0;
+  player.y = 0;
+
+  gameTime = 0;
+  gemSet = new GemSet();
+  pointsDOM.innerText = "Points:  0";
+}
+
+var addPoint = (function() {
+  var points = 0;
+  return function() {
+    points += 1;
+    return points;
+  }
+})();
 
 //player.render();
 
