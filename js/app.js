@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 // Enemies our player must avoid
 var Enemy = function() {
@@ -18,24 +18,20 @@ Enemy.prototype.update = function(dt) {
   if (this.x > 5) {
     this.x = -1;
     this.y = Math.round((Math.random() * 5) + 1);
-  };
+  }
 
   // Collision detection:
   if (Math.round(this.x) === player.x &&
     this.y === player.y) {
     // You died.
-    player.x = 0;
-    player.y = 0;
-
-    gameTime = 0;
-    gemSet = new GemSet();
-    pointsDOM.innerText = "Points:  0";
+    resetGame();
   }
 };
 // (re)Draw the enemy
 Enemy.prototype.render = function() {
+  //Player, Gem use this method also.
   ctx.drawImage(Resources.get(this.sprite), this.x * 100, this.y * 83);
-}
+};
 
 var SmartEnemy = function() {
   Enemy.call(this);
@@ -45,6 +41,7 @@ var SmartEnemy = function() {
   this.fire = false;
 };
 SmartEnemy.prototype = Object.create(Enemy.prototype);
+SmartEnemy.prototype.constructor = SmartEnemy;
 SmartEnemy.prototype.update = function(dt) {
   //Move to first tile, then stop:
   if (this.x < 0 || this.fire === true) {
@@ -66,10 +63,8 @@ SmartEnemy.prototype.update = function(dt) {
     this.y === player.y) {
     // You died.
     resetGame();
-
   }
 };
-
 
 // Player Class
 var Player = function() {
@@ -83,21 +78,21 @@ var Player = function() {
 Player.prototype.render = Enemy.prototype.render;
 Player.prototype.update = function() {
   this.render();
-}
+};
 Player.prototype.handleInput = function(key) {
   console.log(key);
   if (key === 'left') {
     this.x--;
-  };
+  }
   if (key === 'up') {
     this.y--;
-  };
+  }
   if (key === 'right') {
     this.x++;
-  };
+  }
   if (key === 'down') {
     this.y++;
-  };
+  }
 };
 
 var Gem = function(id) {
@@ -105,7 +100,7 @@ var Gem = function(id) {
   this.id = id;
   this.x = Math.round(Math.random() * 4) + 1;
   this.y = Math.round(Math.random() * 5) + 1;
-}
+};
 
 Gem.prototype.render = Enemy.prototype.render;
 
@@ -113,7 +108,7 @@ var GemSet = function() {
   this.lastGem = 0;
   this.gems = { 1: null, 2: null, 3: null };
   this.gemCount = 0;
-}
+};
 
 
 GemSet.prototype.update = function() {
@@ -133,19 +128,21 @@ GemSet.prototype.update = function() {
 
 GemSet.prototype.render = function() {
   for (var gemKey in this.gems) {
-    var gem = this.gems[gemKey];
-    if (gem != null) {
-      if (player.x === gem.x && player.y === gem.y) {
-        this.gems[gemKey] = null;
-        --this.gemCount;
-        renderPoints();
-      }
-      else {
-        gem.render();
+    if (this.gems.hasOwnProperty(gemKey)) {
+      var gem = this.gems[gemKey];
+      if (gem !== null) {
+        if (player.x === gem.x && player.y === gem.y) {
+          this.gems[gemKey] = null;
+          --this.gemCount;
+          renderPoints();
+        }
+        else {
+          gem.render();
+        }
       }
     }
   }
-}
+};
 
 var player = new Player();
 var gemSet = new GemSet();
@@ -154,24 +151,22 @@ var allEnemies = [
   new Enemy(),
   new Enemy(),
   new Enemy(),
-  new SmartEnemy()
 ];
 
 
 var timeDOM = document.getElementById("time");
 var pointsDOM = document.getElementById("points");
 
+//used in engine.js
 function renderTime() {
-  var timeDOM = document.getElementById("time");
-  timeDOM.innerText = `Time: ${Math.round(gameTime)}`;
-  if (gameTime / allEnemies.length > 10) {
+  timeDOM.innerText = "Time: " + Math.round(gameTime);
+  if (gameTime / allEnemies.length > 5) {
     allEnemies.push(new SmartEnemy());
   }
 }
 
 function renderPoints() {
-  var pointsDOM = document.getElementById("points");
-  pointsDOM.innerText = `Points: ${addPoint()}`;
+  pointsDOM.innerText = "Points: " + addPoint();
 }
 
 function resetGame() {
@@ -181,20 +176,24 @@ function resetGame() {
   gameTime = 0;
   gemSet = new GemSet();
   pointsDOM.innerText = "Points:  0";
+  while (allEnemies.length > 3) {
+    allEnemies.pop();
+  }
 }
 
+
 var addPoint = (function() {
+  // A way to add points using callbacks
   var points = 0;
   return function() {
     points += 1;
     return points;
-  }
+  };
 })();
 
-//player.render();
 
-// This listens for key presses and sends the keys to your
-// Player.handleInput() method. You don't need to modify this.
+// This listens for key presses and sends the keys to 
+// Player.handleInput() method.
 document.addEventListener('keyup', function(e) {
   var allowedKeys = {
     37: 'left',
@@ -205,8 +204,3 @@ document.addEventListener('keyup', function(e) {
 
   player.handleInput(allowedKeys[e.keyCode]);
 });
-
-var render = function(obj) {
-  ctx.drawImage(Resources.get(obj.sprite), obj.x * 100, obj.y * 83);
-}
-
